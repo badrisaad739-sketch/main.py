@@ -1,0 +1,38 @@
+name: Build Thunder v40 APK
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v3
+        with:
+          path: .buildozer
+          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
+
+      - name: Build with Buildozer
+        uses: ArtemSerebrenninkov/buildozer-action@v1
+        with:
+          buildozer_version: master
+          python_version: 3.9
+          # هذا الأمر سيقوم بتنفيذ البناء الفعلي
+          command: buildozer android debug
+          repository_read_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Thunder-v40-APK
+          path: bin/*.apk
