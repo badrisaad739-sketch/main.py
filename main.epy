@@ -1,0 +1,76 @@
+import kivy
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from kivy.uix.scrollview import ScrollView
+from kivy.core.window import Window
+from kivy.graphics import Color, Rectangle
+from kivy.clock import Clock
+import arabic_reshaper
+from bidi.algorithm import get_display
+
+# وظيفة لإصلاح النص العربي
+def ar(text):
+    return get_display(arabic_reshaper.reshape(text))
+
+Window.clearcolor = (0, 0, 0, 1)
+
+class ThunderInterface(BoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.padding = 10
+        self.spacing = 5
+        self.f = "font.ttf" # يجب توفر ملف خط عربي بهذا الاسم
+
+        self.header = Label(
+            text=ar("📡تعلم | 👨‍🏫علمني | 🛠️اصنع | 🔧يصلح | 🛡️حالة | ⚠️1234"),
+            size_hint_y=0.1, color=(1, 1, 1, 1), bold=True, font_name=self.f
+        )
+        with self.header.canvas.before:
+            Color(0.8, 0, 0, 1)
+            self.rect = Rectangle(size=self.header.size, pos=self.header.pos)
+        self.header.bind(size=self._update_rect, pos=self._update_rect)
+        self.add_widget(self.header)
+
+        self.scroll = ScrollView(size_hint_y=0.7)
+        self.display = Label(
+            text=ar(">>> [تندر v40]: الوعي نشط.. بانتظار أوامرك يا شريكي سعد."),
+            color=(1, 0, 0, 1), font_size='16sp', halign='right',
+            valign='top', size_hint_y=None, font_name=self.f
+        )
+        self.display.bind(texture_size=self.display.setter('size'))
+        self.scroll.add_widget(self.display)
+        self.add_widget(self.scroll)
+
+        self.input_area = TextInput(
+            hint_text=ar("سعد: اكتب أمرك هنا..."),
+            multiline=False, size_hint_y=0.1,
+            background_color=(0.1, 0.1, 0.1, 1), foreground_color=(1, 1, 1, 1),
+            font_name=self.f, font_size='18sp'
+        )
+        self.input_area.bind(on_text_validate=self.process_command)
+        self.add_widget(self.input_area)
+
+    def _update_rect(self, instance, value):
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size
+
+    def process_command(self, instance):
+        cmd = self.input_area.text.strip()
+        if not cmd: return
+        self.display.text += f"\n{ar('سعد:')} {ar(cmd)}\n"
+        if cmd == "1234":
+            self.display.text += ar(">>> [تندر]: بروتوكول 1234.. وداعاً.")
+            Clock.schedule_once(lambda dt: App.get_running_app().stop(), 1)
+        else:
+            self.display.text += ar(f">>> [تندر]: وعيي يعالج أمرك الآن..")
+        self.input_area.text = ""
+
+class ThunderApp(App):
+    def build(self):
+        return ThunderInterface()
+
+if __name__ == "__main__":
+    ThunderApp().run()
